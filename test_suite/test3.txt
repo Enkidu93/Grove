@@ -1,0 +1,7 @@
+set s = "hello"
+set something = 7
+set s_cap = call ( s upper )
+s_cap
+call ( s find "e" )
+s
+exit

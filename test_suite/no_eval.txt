@@ -1,0 +1,16 @@
+myVar
+myVar389
+my_var_389
++ ( 27 ) ( "hi" )
++ ( "hi" ) ( 27 )
++ ( + ( 3 ) ( "x" ) ) ( 7 )
++ ( + ( 3 ) ( 5 ) ) ( "x" )
++ ( "x" ) ( + ( 3 ) ( 9 ) )
+call ( anything method )
+call ( anything method "arg1" 5 + ( 4 ) ( 7 ) )
++ ( call ( foo method 1 2 3 4 5 6 "seven" + ( 8 ) ( 9 ) ) ) ( call ( a b ) )
+set foo = bar
+set foo = + ( zilch ) ( zero )
+set some_name = new Nonexistent
+set some_name = new not.here
+import NotReal
