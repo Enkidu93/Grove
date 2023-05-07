@@ -210,7 +210,16 @@ class Name(Expression):
 
 class StringLiteral(Expression):
     # TODO: Implement node for String literals
-    pass
+    def __init__(self, word):
+        self.word = word
+    def eval(self):
+        for c in self.word:
+            if(c == ' '):
+                return GroveLangEvalException
+        return self.word
+    def parse(tokens: list[str]):
+        for str in tokens:
+            eval(str)
 
 class Object(Expression):
 	# TODO: Implement node for "new" expression
@@ -226,4 +235,21 @@ class Import(Expression):
 
 class Terminate(Expression):
 	# TODO: Implement node for "quit" and "exit" statements
-	pass
+    def __init__(self, word):
+        self.word = word
+    def eval(self): 
+        if self.keyword == "quit" or self.keyword == "exit":
+            quit()
+        else:
+            raise GroveLangEvalException("Invalid keyword")
+    def parse(tokens: list[str]) -> Expression:
+        """Factory method for creating Terminate commands from tokens"""
+        # check to see if this string matches the pattern for terminate
+        # 0. ensure there are enough tokens for this to be a terminate statement
+        if len(tokens) != 1:
+            raise GroveLangParseException("Statement too long for Terminate")
+        # 1. ensure that the only token is "quit" or "exit"
+        keyword = tokens[0]
+        if keyword != 'quit' and keyword != 'exit': 
+            raise GroveLangParseException("Terminate statements must be 'quit' or 'exit'")
+        return Terminate(keyword)
