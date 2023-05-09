@@ -1,6 +1,7 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Any, Union
+import importlib
 
 # create a context where variables stored with set are kept
 context: dict[str,int] = {}
@@ -166,6 +167,7 @@ class Add(Expression):
             raise GroveLangParseException(f"Unable to parse second addend in: {s}")
         # if this point is reached, this is a valid Add expression
         return Add(first, second)
+    #TODO CHECK TYPE MISMATCH
 
 # define an expression for an integer constant
 class Number(Expression):
@@ -218,12 +220,37 @@ class StringLiteral(Expression):
                 return GroveLangEvalException
         return self.word
     def parse(tokens: list[str]):
-        for str in tokens:
-            eval(str)
+        raise GroveLangParseException
+        # for str in tokens:
+        #     eval(str)
 
 class Object(Expression):
-	# TODO: Implement node for "new" expression
-    pass
+    def __init__(self, value):
+        # self.name = name
+        self.value = value
+    def eval(self):
+        return self.value
+    @staticmethod
+    def parse(tokens: list[str]) -> Object:
+        if tokens[0] != "new":
+            raise GroveLangParseException("Object instantiation must begin with 'new' keyword.")
+        try:                
+            path_elements = tokens[1].split(".")
+            if len(path_elements) == 1:
+                class_ = eval(tokens[1])
+            else:
+                class_name = path_elements[-1]
+                module_name = '.'.join(path_elements[0:-1])
+                if verbose:
+                    print(module_name, class_name)
+                module = importlib.import_module(module_name)
+                class_ = getattr(module, class_name)
+            instance = class_()
+        except Exception as e:
+            if verbose: print(e)
+            raise GroveLangParseException('Not enough tokens to be object instantiation')
+        return Object(instance)
+
     
 class Call(Expression):
     # TODO: Implement node for "call" expression
