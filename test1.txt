@@ -1,0 +1,6 @@
+set a_b = 7
+set A_B = 89
+a_b
+A_B
++ ( A_B ) ( a_b )
+exit

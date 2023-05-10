@@ -81,12 +81,19 @@ class Statement(Command, metaclass=ABCMeta):
     def __init__(self): pass
     @abstractmethod
     def eval(self) -> None: pass
-    @staticmethod
-    def parse(tokens: list[str]) -> Statement:
+    @classmethod
+    def parse(cls, tokens: list[str]) -> Statement:
         """Factory method for creating Statement subclasses from tokens"""
-        # the only valid statement in our language is set so try that
-        stmt: Statement = Set.parse(tokens)
-        return stmt
+        # get a list of all the subclasses of Statement
+        subclasses: list[type[Statement]] = cls.__subclasses__()
+        # try each subclass in turn to see if it matches the pattern
+        for subclass in subclasses:
+            try: 
+                return subclass.parse(tokens)
+            except GroveLangParseException as e:
+                if verbose: print(e)
+        # if none of the subclasses parsed successfully raise an exception
+        raise GroveLangParseException(f"Unrecognized Expression: {' '.join(tokens)}")
 
 # define a class to represent the "set" statement
 class Set(Statement):
@@ -205,8 +212,8 @@ class Name(Expression):
         if len(tokens) != 1:
             raise GroveLangParseException("Wrong number of tokens for Name")
         # 1. ensure that all characters in that token are alphabetic
-        if not tokens[0].isalpha():
-            raise GroveLangParseException("Names can only contain letters")
+        if not tokens[0].isidentifier():
+            raise GroveLangParseException("Names can only contain letters, numbers, or _")
         # if this point is reached, this is a valid Number expression
         return Name(tokens[0])
 
@@ -232,6 +239,8 @@ class Object(Expression):
         return self.value
     @staticmethod
     def parse(tokens: list[str]) -> Object:
+        if len(tokens) < 2:
+            raise GroveLangParseException("Object instantiation requires two tokens.")
         if tokens[0] != "new":
             raise GroveLangParseException("Object instantiation must begin with 'new' keyword.")
         try:                
@@ -253,17 +262,36 @@ class Object(Expression):
 
     
 class Call(Expression):
-    # TODO: Implement node for "call" expression
-    pass
-
-class Import(Expression):
     # TODO: Implement node for "import" statements
     pass
 
-class Terminate(Expression):
+class Import(Statement):
+    def __init__(self, names):
+        self.names:list[Name] = names
+    def eval(self):
+        #TODO
+        pass
+    @staticmethod
+    def parse(tokens: list[str]) -> Object:
+        if len(tokens) < 2:
+            raise GroveLangParseException("Not enough tokens for import statement")
+        if tokens[0] != "import":
+            raise GroveLangParseException("Import statement must begin with 'import' keyword.")
+        try:                
+            name_tokens = tokens[1].split(".")
+            names = []
+            for name_token in name_tokens:
+                names.append(Name.parse([name_token]))
+            return Import(names)
+        except Exception as e:
+            if verbose: print(e)
+            raise GroveLangParseException('Not enough tokens to be import statement')
+        
+
+class Terminate(Statement):
 	# TODO: Implement node for "quit" and "exit" statements
     def __init__(self, word):
-        self.word = word
+        self.keyword = word
     def eval(self): 
         if self.keyword == "quit" or self.keyword == "exit":
             quit()

@@ -1,0 +1,11 @@
+set x = 18394
+set a = 3
+set b = "hi"
+set c = + ( 3 ) ( 5 )
+set d = + ( "x" ) ( + ( "y" ) ( "z" ) )
+import os
+import sys
+import pprint
+set f = new __builtins__.list
+set g = new __builtins__.tuple
+set h = new __builtins__.dict

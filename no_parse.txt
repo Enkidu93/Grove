@@ -1,0 +1,23 @@
++(nonsense)
++ ( missing ) ( )
++ ( missing ) (
++ ( missing ) )
++ ( more nonsense ) ( yep )
++ ( no ) ( parsing ) here
+not a name
+578485 +
+78slkdfl
+nope,nope
+"nope
+nope"
+"bad spaces"
+"\"quotes\""
+call
+call (
+call ( thing
+call ( thing method
+call ( thing method set something = 3 )
+set foo = set foo
+set foo = new alpha beta gamma
+set 1 = 0
+import
