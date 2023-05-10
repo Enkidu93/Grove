@@ -215,15 +215,13 @@ class StringLiteral(Expression):
     def __init__(self, word):
         self.word = word
     def eval(self):
-        for c in self.word:
-            if(c == ' '):
-                return GroveLangEvalException
         return self.word
     @staticmethod
     def parse(tokens: list[str]):
-        raise GroveLangParseException
-        # for str in tokens:
-        #     eval(str)
+        for c in tokens:
+            if(c == ' ' or c == '\\'):
+                return GroveLangEvalException
+        return tokens
 
 class Object(Expression):
     def __init__(self, value):
