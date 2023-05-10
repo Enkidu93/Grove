@@ -30,7 +30,7 @@ def check_no_eval(filename="no_eval.txt"):
                 root.eval()
                 print("Failed to raise an evaluation error for the following line:")
                 print(ln)
-            except GroveLangEvalException:
+            except GroveLangEvalError:
                 numTestsPassed = numTestsPassed + 1
             except Exception as e:
                 print("Unexpected error (" + str(e) + ") when trying to evaluate the following line:")
@@ -53,7 +53,7 @@ def check_bad_last_eval(filename):
             print("Failed to raise an evaluation error for following line:")
             print(lines[-1])
             raise Exception()
-        except GroveLangEvalException as ge:
+        except GroveLangEvalError as ge:
             return ge
     return False
              
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     print("Checking that type mismatch errors are caught...")
     res = check_bad_last_eval("bad_var_types.txt")
     possiblePoints = 4
-    if isinstance(res, GroveLangException):
+    if isinstance(res, GroveLangError):
         points = possiblePoints
     else:
         points = 0
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     print("Checking that undefined method calls are caught...")
     res = check_bad_last_eval("bad_call.txt")
     possiblePoints = 4
-    if isinstance(res, GroveLangException):
+    if isinstance(res, GroveLangError):
         points = possiblePoints
         print("NOTE: The following GroveError should say something about an unrecognized or undefined method:")
         print(res)
