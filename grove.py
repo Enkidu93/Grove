@@ -2,7 +2,7 @@ from grove_parse import *
 from grove_lang_lang import *
 
 def main():
-    print("Welcome to the Grove Interpreter!")
+    # print("Welcome to the Grove Interpreter!")
     while True:
         s: str = input('> ')
         try:
