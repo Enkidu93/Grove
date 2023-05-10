@@ -240,11 +240,30 @@ class StringLiteral(Expression):
     
 
 class Object(Expression):
-    def __init__(self, value):
+    def __init__(self, names):
         # self.name = name
-        self.value = value
+        self.names:list[str] = names
     def eval(self):
-        return self.value
+        path_elements = [name.name for name in self.names]
+        if len(path_elements) == 1:
+            class_ = path_elements[0]
+        else:
+            class_name = path_elements[-1]
+            module_name = '.'.join(path_elements[0:-1])
+            if verbose:
+                print(module_name, class_name)
+            if module_name == '__builtins__':
+                class_ = eval(class_name)
+            else:
+                try:
+                    module = context[module_name]
+                except KeyError:
+                    raise GroveLangEvalException(f"Module {module_name} not in context.")
+                try:
+                    class_ = getattr(module, class_name)
+                except AttributeError as e:
+                    raise GroveLangEvalException(e.msg)
+        return class_()
     @staticmethod
     def parse(tokens: list[str]) -> Object:
         if len(tokens) < 2:
@@ -252,24 +271,14 @@ class Object(Expression):
         if tokens[0] != "new":
             raise GroveLangParseException("Object instantiation must begin with 'new' keyword.")
         try:                
-            path_elements = tokens[1].split(".")
-            if len(path_elements) == 1:
-                class_ = eval(tokens[1])
-            else:
-                class_name = path_elements[-1]
-                module_name = '.'.join(path_elements[0:-1])
-                if verbose:
-                    print(module_name, class_name)
-                if module_name == '__builtins__':
-                    class_ = eval(class_name)
-                else:
-                    module = importlib.import_module(module_name)
-                    class_ = getattr(module, class_name)
-            instance = class_()
+            name_tokens = tokens[1].split(".")
+            names = []
+            for name_token in name_tokens:
+                names.append(Name.parse([name_token]))
+            return Object(names)
         except Exception as e:
             if verbose: print(e)
             raise GroveLangParseException('Object instantiation failed')
-        return Object(instance)
 
     
 class Call(Expression):
@@ -280,8 +289,12 @@ class Import(Statement):
     def __init__(self, names):
         self.names:list[Name] = names
     def eval(self):
-        #TODO
-        pass
+        try:
+            module_name = ".".join([name.name for name in self.names])
+            module = importlib.import_module(module_name)
+            context[module_name] = module
+        except ModuleNotFoundError as m:
+            raise GroveLangEvalException(f"Module not found: {m.msg}")
     @staticmethod
     def parse(tokens: list[str]) -> Object:
         if len(tokens) < 2:
