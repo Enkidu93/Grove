@@ -1,12 +1,10 @@
-Error Parsing set feb = call ( c monthdayscalendar 2014 2 )
-Unrecognized Command: set feb = call ( c monthdayscalendar 2014 2 )
-Error Parsing set weekTwo = call ( feb __getitem__ 1 )
-Unrecognized Command: set weekTwo = call ( feb __getitem__ 1 )
-Error Parsing set nine = call ( weekTwo __getitem__ 6 )
-Unrecognized Command: set nine = call ( weekTwo __getitem__ 6 )
-Error Evaluating nine
-nine is undefined
-Error Parsing set march = call ( txt_c formatmonth 2014 3 )
-Unrecognized Command: set march = call ( txt_c formatmonth 2014 3 )
-Error Parsing call ( march __len__ )
-Unrecognized Command: call ( march __len__ )
+Traceback (most recent call last):
+  File "grove.py", line 19, in <module>
+    main()
+  File "grove.py", line 9, in main
+    x = Command.parse(s).eval()
+  File "/mnt/c/Users/BrowderKD20/Grove/Grove/grove_lang_lang.py", line 127, in eval
+    context[self.name.name] = self.value.eval()
+  File "/mnt/c/Users/BrowderKD20/Grove/Grove/grove_lang_lang.py", line 310, in eval
+    self.methodName(el)
+TypeError: 'Name' object is not callable
