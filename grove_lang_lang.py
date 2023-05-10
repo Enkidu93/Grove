@@ -258,18 +258,18 @@ class Object(Expression):
                 try:
                     module = context[module_name]
                 except KeyError:
-                    raise GroveLangEvalException(f"Module {module_name} not in context.")
+                    raise GroveEvalError(f"Module {module_name} not in context.")
                 try:
                     class_ = getattr(module, class_name)
                 except AttributeError as e:
-                    raise GroveLangEvalException(e.msg)
+                    raise GroveEvalError(e.msg)
         return class_()
     @staticmethod
     def parse(tokens: list[str]) -> Object:
         if len(tokens) < 2:
-            raise GroveLangParseException("Object instantiation requires two tokens.")
+            raise GroveParseError("Object instantiation requires two tokens.")
         if tokens[0] != "new":
-            raise GroveLangParseException("Object instantiation must begin with 'new' keyword.")
+            raise GroveParseError("Object instantiation must begin with 'new' keyword.")
         try:                
             name_tokens = tokens[1].split(".")
             names = []
@@ -293,7 +293,7 @@ class Import(Statement):
             module = importlib.import_module(module_name)
             context[module_name] = module
         except ModuleNotFoundError as m:
-            raise GroveLangEvalException(f"Module not found: {m.msg}")
+            raise GroveEvalError(f"Module not found: {m.msg}")
     @staticmethod
     def parse(tokens: list[str]) -> Object:
         if len(tokens) < 2:
