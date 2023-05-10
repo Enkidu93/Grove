@@ -219,6 +219,7 @@ class StringLiteral(Expression):
             if(c == ' '):
                 return GroveLangEvalException
         return self.word
+    @staticmethod
     def parse(tokens: list[str]):
         raise GroveLangParseException
         # for str in tokens:
@@ -232,6 +233,8 @@ class Object(Expression):
         return self.value
     @staticmethod
     def parse(tokens: list[str]) -> Object:
+        if len(tokens) < 2:
+            raise GroveLangParseException("Too short for Object instantiation")
         if tokens[0] != "new":
             raise GroveLangParseException("Object instantiation must begin with 'new' keyword.")
         try:                
@@ -243,12 +246,15 @@ class Object(Expression):
                 module_name = '.'.join(path_elements[0:-1])
                 if verbose:
                     print(module_name, class_name)
-                module = importlib.import_module(module_name)
-                class_ = getattr(module, class_name)
+                if module_name == '__builtins__':
+                    class_ = eval(class_name)
+                else:
+                    module = importlib.import_module(module_name)
+                    class_ = getattr(module, class_name)
             instance = class_()
         except Exception as e:
             if verbose: print(e)
-            raise GroveLangParseException('Not enough tokens to be object instantiation')
+            raise GroveLangParseException('Object instantiation failed')
         return Object(instance)
 
     
@@ -269,6 +275,7 @@ class Terminate(Expression):
             quit()
         else:
             raise GroveLangEvalException("Invalid keyword")
+    @staticmethod
     def parse(tokens: list[str]) -> Expression:
         """Factory method for creating Terminate commands from tokens"""
         # check to see if this string matches the pattern for terminate
