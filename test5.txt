@@ -1,0 +1,14 @@
+set ge = new GroveError
+set lst = new __builtins__.list
+call ( lst append 3 )
+call ( lst append 5 )
+lst
+set other = new __builtins__.list
+call ( other append 4 )
+call ( other append 6 )
+other
+call ( other extend lst )
+other
+set t = new __builtins__.tuple
+call ( t count 7 )
+exit

@@ -1,0 +1,130 @@
+Checking that parsing errors are caught...
+Failed to raise a parsing error for following line:
+call
+
+Failed to raise a parsing error for following line:
+import
+
+
+*** EARNED 14 out of 16 for catching parsing errors.
+
+
+Checking that evaluation errors are caught...
+Unexpected error (unsupported operand type(s) for +: 'int' and 'str') when trying to evaluate the following line:
++ ( 27 ) ( "hi" )
+
+Unexpected error (can only concatenate str (not "int") to str) when trying to evaluate the following line:
++ ( "hi" ) ( 27 )
+
+Unexpected error (unsupported operand type(s) for +: 'int' and 'str') when trying to evaluate the following line:
++ ( + ( 3 ) ( "x" ) ) ( 7 )
+
+Unexpected error (unsupported operand type(s) for +: 'int' and 'str') when trying to evaluate the following line:
++ ( + ( 3 ) ( 5 ) ) ( "x" )
+
+Unexpected error (can only concatenate str (not "int") to str) when trying to evaluate the following line:
++ ( "x" ) ( + ( 3 ) ( 9 ) )
+
+Checking results from single-line expressions...
+
+*** EARNED 10 out of 10 for the single-line expressions
+
+
+Checking results from single-line statements...
+
+*** EARNED 11 out of 11 for the single-line statements
+
+
+Checking test1.txt...
+(correct answer on left, yours on the right)
+7								7
+89								89
+96								96
+
+*** EARNED 6 out of 6 for test1.txt
+
+
+Checking test2.txt...
+(correct answer on left, yours on the right)
+5								5
+12								12
+17								17
+hi								hi
+12								12
+hibye								hibye
+
+*** EARNED 6 out of 6 for test2.txt
+
+
+Checking test3.txt...
+(correct answer on left, yours on the right)
+HELLO							      |	Error Parsing set s_cap = call ( s upper )
+1							      |	Unrecognized Command: set s_cap = call ( s upper )
+							      >	Error Evaluating s_cap
+							      >	s_cap is undefined
+							      >	Error Parsing call ( s find "e" )
+							      >	Unrecognized Command: call ( s find "e" )
+hello								hello
+
+*** EARNED 0 out of 6 for test3.txt
+
+
+Checking test4.txt...
+(correct answer on left, yours on the right)
+a							      |	Error Parsing set s_cap = call ( s upper )
+g							      |	Unrecognized Command: set s_cap = call ( s upper )
+THX_X_A_STRING						      |	Error Parsing call ( s __getitem__ call ( s_cap find "A" ) )
+							      >	Unrecognized Command: call ( s __getitem__ call ( s_cap find 
+							      >	Error Parsing call ( s __getitem__ + ( 1 ) ( call ( s find "n
+							      >	Unrecognized Command: call ( s __getitem__ + ( 1 ) ( call ( s
+							      >	Error Parsing set no_is = call ( s_cap replace "IS" "X" )
+							      >	Unrecognized Command: set no_is = call ( s_cap replace "IS" "
+							      >	Error Evaluating no_is
+							      >	no_is is undefined
+
+*** EARNED 0 out of 6 for test4.txt
+
+
+Checking test5.txt...
+(correct answer on left, yours on the right)
+[3, 5]							      |	Error Parsing set ge = new GroveException
+[4, 6]							      |	Unrecognized Command: set ge = new GroveException
+[4, 6, 3, 5]						      |	Error Parsing call ( lst append 3 )
+0							      |	Unrecognized Command: call ( lst append 3 )
+							      >	Error Parsing call ( lst append 5 )
+							      >	Unrecognized Command: call ( lst append 5 )
+							      >	[]
+							      >	Error Parsing call ( other append 4 )
+							      >	Unrecognized Command: call ( other append 4 )
+							      >	Error Parsing call ( other append 6 )
+							      >	Unrecognized Command: call ( other append 6 )
+							      >	[]
+							      >	Error Parsing call ( other extend lst )
+							      >	Unrecognized Command: call ( other extend lst )
+							      >	[]
+							      >	Error Parsing call ( t count 7 )
+							      >	Unrecognized Command: call ( t count 7 )
+
+*** EARNED 0 out of 6 for test5.txt
+
+
+Checking test6.txt...
+(correct answer on left, yours on the right)
+9							      |	Error Parsing set feb = call ( c monthdayscalendar 2014 2 )
+145							      |	Unrecognized Command: set feb = call ( c monthdayscalendar 20
+							      >	Error Parsing set weekTwo = call ( feb __getitem__ 1 )
+							      >	Unrecognized Command: set weekTwo = call ( feb __getitem__ 1 
+							      >	Error Parsing set nine = call ( weekTwo __getitem__ 6 )
+							      >	Unrecognized Command: set nine = call ( weekTwo __getitem__ 6
+							      >	Error Evaluating nine
+							      >	nine is undefined
+							      >	Error Parsing set march = call ( txt_c formatmonth 2014 3 )
+							      >	Unrecognized Command: set march = call ( txt_c formatmonth 20
+							      >	Error Parsing call ( march __len__ )
+							      >	Unrecognized Command: call ( march __len__ )
+
+*** EARNED 0 out of 6 for test6.txt
+
+
+34 total points
+{"scores" : {"all": 34 } }

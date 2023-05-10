@@ -1,0 +1,7 @@
+set s = "this_is_a_string"
+set s_cap = call ( s upper )
+call ( s __getitem__ call ( s_cap find "A" ) )
+call ( s __getitem__ + ( 1 ) ( call ( s find "n" ) ) )
+set no_is = call ( s_cap replace "IS" "X" )
+no_is
+quit

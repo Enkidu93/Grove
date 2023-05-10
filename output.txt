@@ -1,0 +1,13 @@
+Grove>> Grove>> Grove>> Error Parsing set feb = call ( c monthdayscalendar 2014 2 )
+Unrecognized Command: set feb = call ( c monthdayscalendar 2014 2 )
+Grove>> Error Parsing set weekTwo = call ( feb __getitem__ 1 )
+Unrecognized Command: set weekTwo = call ( feb __getitem__ 1 )
+Grove>> Error Parsing set nine = call ( weekTwo __getitem__ 6 )
+Unrecognized Command: set nine = call ( weekTwo __getitem__ 6 )
+Grove>> Error Evaluating nine
+nine is undefined
+Grove>> Grove>> Error Parsing set march = call ( txt_c formatmonth 2014 3 )
+Unrecognized Command: set march = call ( txt_c formatmonth 2014 3 )
+Grove>> Error Parsing call ( march __len__ )
+Unrecognized Command: call ( march __len__ )
+Grove>> 

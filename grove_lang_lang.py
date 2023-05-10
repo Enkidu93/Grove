@@ -10,9 +10,9 @@ context: dict[str,int] = {}
 verbose = False
 
 # define base classes for Language exceptions for ParsingExceptions
-class GroveLangException(Exception): pass
-class GroveLangParseException(GroveLangException): pass
-class GroveLangEvalException(GroveLangException): pass
+class GroveError(Exception): pass
+class GroveParseError(GroveError): pass
+class GroveEvalError(GroveError): pass
 
 # define a base class for Commands
 class Command(metaclass=ABCMeta):
@@ -29,14 +29,14 @@ class Command(metaclass=ABCMeta):
         try:
             # first try to parse the command as a statement
             return Statement.parse(tokens)
-        except GroveLangParseException as e:
+        except GroveParseError as e:
             if verbose: print(e)
         try:
             # if it is not a statement, try an expression
             return Expression.parse(tokens)
-        except GroveLangParseException as e:
+        except GroveParseError as e:
             if verbose: print(e)
-        raise GroveLangParseException(f"Unrecognized Command: {s}")
+        raise GroveParseError(f"Unrecognized Command: {s}")
 
 # define a base class for Expressions
 class Expression(Command, metaclass=ABCMeta):
@@ -53,16 +53,16 @@ class Expression(Command, metaclass=ABCMeta):
         for subclass in subclasses:
             try: 
                 return subclass.parse(tokens)
-            except GroveLangParseException as e:
+            except GroveParseError as e:
                 if verbose: print(e)
         # if none of the subclasses parsed successfully raise an exception
-        raise GroveLangParseException(f"Unrecognized Expression: {' '.join(tokens)}")
+        raise GroveParseError(f"Unrecognized Expression: {' '.join(tokens)}")
     @staticmethod
     def match_parens(tokens: list[str]) -> int:
         """Searches tokens beginning with ( and returns index of matching )"""
         # ensure tokens is such that a matching ) might exist
-        if len(tokens) < 2: raise GroveLangParseException("Expression too short")
-        if tokens[0] != '(': raise GroveLangParseException("No opening ( found")
+        if len(tokens) < 2: raise GroveParseError("Expression too short")
+        if tokens[0] != '(': raise GroveParseError("No opening ( found")
         # track the depth of nested ()
         depth: int = 0
         for i,token in enumerate(tokens):
@@ -73,7 +73,7 @@ class Expression(Command, metaclass=ABCMeta):
             # if after a token the depth reaches 0, return that index
             if depth == 0: return i
         # if the depth never again reached 0 then parens do not match
-        raise GroveLangParseException("No closing ) found")
+        raise GroveParseError("No closing ) found")
 
 # define a base class for Statements
 class Statement(Command, metaclass=ABCMeta):
@@ -81,12 +81,19 @@ class Statement(Command, metaclass=ABCMeta):
     def __init__(self): pass
     @abstractmethod
     def eval(self) -> None: pass
-    @staticmethod
-    def parse(tokens: list[str]) -> Statement:
+    @classmethod
+    def parse(cls, tokens: list[str]) -> Statement:
         """Factory method for creating Statement subclasses from tokens"""
-        # the only valid statement in our language is set so try that
-        stmt: Statement = Set.parse(tokens)
-        return stmt
+        # get a list of all the subclasses of Statement
+        subclasses: list[type[Statement]] = cls.__subclasses__()
+        # try each subclass in turn to see if it matches the pattern
+        for subclass in subclasses:
+            try: 
+                return subclass.parse(tokens)
+            except GroveParseError as e:
+                if verbose: print(e)
+        # if none of the subclasses parsed successfully raise an exception
+        raise GroveParseError(f"Unrecognized Expression: {' '.join(tokens)}")
 
 # define a class to represent the "set" statement
 class Set(Statement):
@@ -105,23 +112,23 @@ class Set(Statement):
         # check to see if this string matches the pattern for set
         # 0. ensure there are enough tokens for this to be a set statement
         if len(tokens) < 4:
-            raise GroveLangParseException("Statement too short for Set")
+            raise GroveParseError("Statement too short for Set")
         # 1. ensure that the very first token is "set" otherwise throw Exception
         if tokens[0] != 'set': 
-            raise GroveLangParseException("Set statements must begin with 'set'")
+            raise GroveParseError("Set statements must begin with 'set'")
         # 2. ensure that the next token is a valid Name
         try:
             name: Name = Name.parse([tokens[1]])
-        except GroveLangParseException:
-            raise GroveLangParseException("No name found for Set statement")
+        except GroveParseError:
+            raise GroveParseError("No name found for Set statement")
         # 3. ensure that the next token is an '='
         if tokens[2] != '=':
-            raise GroveLangParseException("Set statement requires '='")
+            raise GroveParseError("Set statement requires '='")
         # 4. ensure the remaining tokens represent an expression
         try:
             value: Expression = Expression.parse(tokens[3:])
-        except GroveLangParseException:
-            raise GroveLangParseException("No value found for Set statement")
+        except GroveParseError:
+            raise GroveParseError("No value found for Set statement")
         # if this point is reached, this is a valid Set statement
         return Set(name, value)
 
@@ -143,28 +150,28 @@ class Add(Expression):
         # check to see if this string matches the pattern for add
         # 0. ensure there are enough tokens for this to be a add expression
         if len(tokens) < 7:
-            raise GroveLangParseException(f"Not enough tokens for Add in: {s}")
+            raise GroveParseError(f"Not enough tokens for Add in: {s}")
         # 1. ensure the first two tokens are + and (
         if tokens[0] != '+' or tokens[1] != '(':
-            raise GroveLangParseException(f"Add must begin with '+ (' in {s}")
+            raise GroveParseError(f"Add must begin with '+ (' in {s}")
         # 2. ensure there is an expression inside that open parentheses
         try:
             cut = Expression.match_parens(tokens[1:])+1
             first: Expression = Expression.parse(tokens[2:cut])
-        except GroveLangParseException:
-            raise GroveLangParseException(f"Unable to parse first addend in: {s}")
+        except GroveParseError:
+            raise GroveParseError(f"Unable to parse first addend in: {s}")
         # 3. ensure there are enough tokens left after the first expression
         tokens = tokens[cut+1:]
         if len(tokens) < 3:
-            raise GroveLangParseException(f"Not enough tokens left for Add in: {s}")
+            raise GroveParseError(f"Not enough tokens left for Add in: {s}")
         # 4. ensure the first and last of the remaining tokens are ( and )
         if tokens[0] != '(' or tokens[-1] != ')':
-            raise GroveLangParseException(f"Addends must be wrapped in ( ): {s}")
+            raise GroveParseError(f"Addends must be wrapped in ( ): {s}")
         # 5. ensure the tokens between these are a valid expression
         try:
             second: Expression = Expression.parse(tokens[1:-1])
-        except GroveLangParseException:
-            raise GroveLangParseException(f"Unable to parse second addend in: {s}")
+        except GroveParseError:
+            raise GroveParseError(f"Unable to parse second addend in: {s}")
         # if this point is reached, this is a valid Add expression
         return Add(first, second)
     #TODO CHECK TYPE MISMATCH
@@ -182,10 +189,10 @@ class Number(Expression):
         """Factory method for creating Number expressions from tokens"""
         # 0. ensure there is exactly one token
         if len(tokens) != 1:
-            raise GroveLangParseException("Wrong number of tokens for Number")
+            raise GroveParseError("Wrong number of tokens for Number")
         # 1. ensure that all characters in that token are digits
         if not tokens[0].isdigit():
-            raise GroveLangParseException("Numbers can only contain digits")
+            raise GroveParseError("Numbers can only contain digits")
         # if this point is reached, this is a valid Number expression
         return Number(int(tokens[0]))
 
@@ -195,7 +202,7 @@ class Name(Expression):
         self.name = name
     def eval(self) -> int:
         try: return context[self.name]
-        except KeyError: raise GroveLangEvalException(f"{self.name} is undefined")
+        except KeyError: raise GroveEvalError(f"{self.name} is undefined")
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Name) and other.name == self.name
     @staticmethod
@@ -203,10 +210,10 @@ class Name(Expression):
         """Factory method for creating Name expressions from tokens"""
         # 0. ensure there is exactly one token
         if len(tokens) != 1:
-            raise GroveLangParseException("Wrong number of tokens for Name")
+            raise GroveParseError("Wrong number of tokens for Name")
         # 1. ensure that all characters in that token are alphabetic
-        if not tokens[0].isalpha():
-            raise GroveLangParseException("Names can only contain letters")
+        if not tokens[0].isidentifier():
+            raise GroveParseError("Names can only contain letters, numbers, or _")
         # if this point is reached, this is a valid Number expression
         return Name(tokens[0])
 
@@ -215,42 +222,64 @@ class StringLiteral(Expression):
     def __init__(self, word):
         self.word = word
     def eval(self):
-        for c in self.word:
-            if(c == ' '):
-                return GroveLangEvalException
         return self.word
+    @staticmethod
     def parse(tokens: list[str]):
-        raise GroveLangParseException
-        # for str in tokens:
-        #     eval(str)
+        if(len(tokens) != 1):
+            raise GroveParseError("Invalid number of tokens for String Literal")
+        token = tokens[0]
+        if len(token) < 2 or token[0] != '"' or token[-1] != '"':
+            raise GroveParseError("Invalid number of characters for String Literal")
+        token = token[1:-1]
+        if '"' in token:
+            raise GroveParseError("String Literal cannot contain quote")
+        for c in tokens:
+            if(c == ' ' or c == '\\'):
+                raise GroveParseError("String Literal cannot have white spaces")
+        return StringLiteral(token)
+    
 
 class Object(Expression):
-    def __init__(self, value):
+    def __init__(self, names):
         # self.name = name
-        self.value = value
+        self.names:list[str] = names
     def eval(self):
-        return self.value
+        path_elements = [name.name for name in self.names]
+        if len(path_elements) == 1:
+            class_ = path_elements[0]
+        else:
+            class_name = path_elements[-1]
+            module_name = '.'.join(path_elements[0:-1])
+            if verbose:
+                print(module_name, class_name)
+            if module_name == '__builtins__':
+                class_ = eval(class_name)
+            else:
+                try:
+                    module = context[module_name]
+                except KeyError:
+                    raise GroveEvalError(f"Module {module_name} not in context.")
+                try:
+                    class_ = getattr(module, class_name)
+                except AttributeError as e:
+                    raise GroveEvalError(e.msg)
+        return class_()
     @staticmethod
     def parse(tokens: list[str]) -> Object:
+        if len(tokens) < 2:
+            raise GroveParseError("Object instantiation requires two tokens.")
         if tokens[0] != "new":
-            raise GroveLangParseException("Object instantiation must begin with 'new' keyword.")
+            raise GroveParseError("Object instantiation must begin with 'new' keyword.")
         try:                
-            path_elements = tokens[1].split(".")
-            if len(path_elements) == 1:
-                class_ = eval(tokens[1])
-            else:
-                class_name = path_elements[-1]
-                module_name = '.'.join(path_elements[0:-1])
-                if verbose:
-                    print(module_name, class_name)
-                module = importlib.import_module(module_name)
-                class_ = getattr(module, class_name)
-            instance = class_()
+            name_tokens = tokens[1].split(".")
+            names = []
+            for name_token in name_tokens:
+                names.append(Name.parse([name_token]))
+            return Object(names)
         except Exception as e:
             if verbose: print(e)
-            raise GroveLangParseException('Not enough tokens to be object instantiation')
-        return Object(instance)
-
+            raise GroveParseError('Object instantiation failed')
+    
 class Call(Expression):
     def __init__(self, objectName:Name, methodName:Name, args:list[Expression]):
         self.objectName = objectName
@@ -263,46 +292,74 @@ class Call(Expression):
     def parse(tokens: list[str]) -> Call:
         '''extracting the names and testing for error'''
         if len(tokens)<6:
-            raise GroveLangParseException(f"not enough tokens for call ({len(tokens)} given)")
+            raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
         if str(tokens[0])!='call':
-            raise GroveLangParseException(f"not enough tokens for call ({len(tokens)} given)")
+            raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
         if str(tokens[1])!='(':
-            raise GroveLangParseException("Missing a left parenthesis")
+            raise GroveParseError("Missing a left parenthesis")
         if str(tokens[-1])!=")":
-            raise GroveLangParseException("Missing a right parenthesis")
+            raise GroveParseError("Missing a right parenthesis")
         try:
             objectName = Name.parse(tokens[2])
         except:
-            raise GroveLangParseException(f"Object variable {tokens[2]} could not be parsed")
+            raise GroveParseError(f"Object variable {tokens[2]} could not be parsed")
         try:
             methodName = Name.parse(tokens[3])
         except:
-            raise GroveLangParseException(f"Method could not be parsed")
+            raise GroveParseError(f"Method could not be parsed")
         try:
             args = Expression.parse(tokens[3:])
         except:
-            raise GroveLangParseException(f"Expression could not be parsed")
+            raise GroveParseError(f"Expression could not be parsed")
 
         return Call(tokens[2], tokens[3], tokens[3:]) 
     
 
-class Terminate(Expression):
+class Import(Statement):
+    def __init__(self, names):
+        self.names:list[Name] = names
+    def eval(self):
+        try:
+            module_name = ".".join([name.name for name in self.names])
+            module = importlib.import_module(module_name)
+            context[module_name] = module
+        except ModuleNotFoundError as m:
+            raise GroveEvalError(f"Module not found: {m.msg}")
+    @staticmethod
+    def parse(tokens: list[str]) -> Object:
+        if len(tokens) < 2:
+            raise GroveParseError("Not enough tokens for import statement")
+        if tokens[0] != "import":
+            raise GroveParseError("Import statement must begin with 'import' keyword.")
+        try:                
+            name_tokens = tokens[1].split(".")
+            names = []
+            for name_token in name_tokens:
+                names.append(Name.parse([name_token]))
+            return Import(names)
+        except Exception as e:
+            if verbose: print(e)
+            raise GroveParseError('Not enough tokens to be import statement')
+        
+
+class Terminate(Statement):
 	# TODO: Implement node for "quit" and "exit" statements
     def __init__(self, word):
-        self.word = word
+        self.keyword = word
     def eval(self): 
         if self.keyword == "quit" or self.keyword == "exit":
             quit()
         else:
-            raise GroveLangEvalException("Invalid keyword")
+            raise GroveEvalError("Invalid keyword")
+    @staticmethod
     def parse(tokens: list[str]) -> Expression:
         """Factory method for creating Terminate commands from tokens"""
         # check to see if this string matches the pattern for terminate
         # 0. ensure there are enough tokens for this to be a terminate statement
         if len(tokens) != 1:
-            raise GroveLangParseException("Statement too long for Terminate")
+            raise GroveParseError("Statement too long for Terminate")
         # 1. ensure that the only token is "quit" or "exit"
         keyword = tokens[0]
         if keyword != 'quit' and keyword != 'exit': 
-            raise GroveLangParseException("Terminate statements must be 'quit' or 'exit'")
+            raise GroveParseError("Terminate statements must be 'quit' or 'exit'")
         return Terminate(keyword)
