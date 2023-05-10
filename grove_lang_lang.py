@@ -332,8 +332,10 @@ class Call(Expression):
         except:
             raise GroveParseError(f"Expression could not be parsed")
 
-        return Call(tokens[2], tokens[3], tokens[3:]) 
-    
+        return Call(objectName, methodName, args) 
+    def eval(self):
+        f = getattr(self.objectName.eval(), self.methodName.name)
+        return f(*[e.eval() for e in self.args])
 
 class Import(Statement):
     def __init__(self, names):
