@@ -45,7 +45,7 @@ class Expression(Command, metaclass=ABCMeta):
     @abstractmethod
     def eval(self) -> int: pass
     @classmethod
-    def parse(cls, tokens: list[str]) -> Expression:
+    def parse(cls, tokens: list[str]) -> tuple[Expression, list[str]]:
         """Factory method for creating Expression subclasses from tokens"""
         # get a list of all the subclasses of Expression
         subclasses: list[type[Expression]] = cls.__subclasses__()
@@ -251,46 +251,40 @@ class Object(Expression):
             raise GroveLangParseException('Not enough tokens to be object instantiation')
         return Object(instance)
 
-    
 class Call(Expression):
-    # TODO: Implement node for "call" expression
-    def __init__(self, objectName:Name, methodName:Name, *args:Expression):
-        self.objectName = objectName 
+    def __init__(self, objectName:Name, methodName:Name, args:list[Expression]):
+        self.objectName = objectName
         self.methodName = methodName
         self.args = args
-    def eval(self) -> None:
-        for el in dir(self.objectName):
-            if el == self.methodName.name:
-                f = getattr(self.objectName, el)
-    @staticmethod
-    def parse(tokens: tuple[Expression, Name]) -> Call:
-        """extracting the Names and testing for errors"""
-        # 0. ensure there is at least an object and a method
-        if len(tokens) < 2:
-            raise GroveLangParseException("At least 2 arguments expected for method call")
-        # 1. ensure that the object name variable is declared
-        if not tokens[0] in context.keys():
-            raise GroveLangEvalException(f"Object variable {tokens[0]} not declared")
-        # 2. ensure that the method is in the introspection of the variable
-        if tokens[1] not in dir(tokens[0]):
-            raise GroveLangEvalException(f"Variable {tokens[0]} does not have method name {tokens[1]}")
-        rest = list[tokens[2:]]
-        for i in range(len(rest)):
-            try:
-                return rest[i].parse()
-            except:
-                
+    def eval(self):
+        for el in self.args:
+            self.methodName(el)
 
-        return None
+    def parse(tokens: list[str]) -> Call:
+        '''extracting the names and testing for error'''
+        if len(tokens)<6:
+            raise GroveLangParseException(f"not enough tokens for call ({len(tokens)} given)")
+        if str(tokens[0])!='call':
+            raise GroveLangParseException(f"not enough tokens for call ({len(tokens)} given)")
+        if str(tokens[1])!='(':
+            raise GroveLangParseException("Missing a left parenthesis")
+        if str(tokens[-1])!=")":
+            raise GroveLangParseException("Missing a right parenthesis")
+        try:
+            objectName = Name.parse(tokens[2])
+        except:
+            raise GroveLangParseException(f"Object variable {tokens[2]} could not be parsed")
+        try:
+            methodName = Name.parse(tokens[3])
+        except:
+            raise GroveLangParseException(f"Method could not be parsed")
+        try:
+            args = Expression.parse(tokens[3:])
+        except:
+            raise GroveLangParseException(f"Expression could not be parsed")
 
-    def __eq__(self, other: Any):
-        return (isinstance(other, Set) and 
-                self.name == other.name and 
-                self.value == other.value)
-    pass
-class Import(Expression):
-    # TODO: Implement node for "import" statements
-    pass
+        return Call(tokens[2], tokens[3], tokens[3:]) 
+    
 
 class Terminate(Expression):
 	# TODO: Implement node for "quit" and "exit" statements
