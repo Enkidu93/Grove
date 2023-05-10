@@ -222,15 +222,18 @@ class StringLiteral(Expression):
     def __init__(self, word):
         self.word = word
     def eval(self):
-        for c in self.word:
-            if(c == ' '):
-                return GroveLangEvalException
         return self.word
     @staticmethod
     def parse(tokens: list[str]):
-        raise GroveLangParseException
-        # for str in tokens:
-        #     eval(str)
+        if(len(tokens) != 1):
+            raise GroveLangParseException("Invalid number of tokens for String Literal")
+        token = tokens[0]
+        if len(token) < 2 or token[0] != '"' or token[-1] != '"':
+            raise GroveLangParseException("Invalid number of characters for String Literal")
+        token = token[1:-1]
+        if '"' in token:
+            raise GroveLangParseException("String Literal cannot contain quote")
+        return StringLiteral(token)
 
 class Object(Expression):
     def __init__(self, value):
