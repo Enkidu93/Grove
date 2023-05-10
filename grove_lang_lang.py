@@ -305,14 +305,11 @@ class Call(Expression):
         self.objectName = objectName
         self.methodName = methodName
         self.args = args
-    def eval(self):
-        for el in self.args:
-            self.methodName(el)
 
     @staticmethod
     def parse(tokens: list[str]) -> Call:
         '''extracting the names and testing for error'''
-        if len(tokens)<6:
+        if len(tokens)<5:
             raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
         if str(tokens[0])!='call':
             raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
@@ -329,11 +326,12 @@ class Call(Expression):
         except:
             raise GroveParseError(f"Method {tokens[3]} could not be parsed (in call)")
         try:
-            args = Expression.parse_list(tokens[3:-1])
+            args = Expression.parse_list(tokens[4:-1])
         except:
             raise GroveParseError(f"Expression could not be parsed (in call)")
 
         return Call(objectName, methodName, args) 
+    
     def eval(self):
         f = getattr(self.objectName.eval(), self.methodName.name)
         return f(*[e.eval() for e in self.args])
