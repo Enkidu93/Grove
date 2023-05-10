@@ -1,4 +1,4 @@
-from grove_lang_lang import Command, GroveLangParseException, GroveLangEvalException, GroveLangException
+from grove_lang_lang import Command, GroveLangParseError, GroveLangEvalError, GroveLangError
 import sys
 
 def check_no_parse(filename="no_parse.txt"):
@@ -11,7 +11,7 @@ def check_no_parse(filename="no_parse.txt"):
                 Command.parse(ln)
                 print("Failed to raise a parsing error for following line:")
                 print(ln)
-            except GroveLangParseException:
+            except GroveLangParseError:
                 numTestsPassed = numTestsPassed + 1
             except Exception as e:
                 print("Unexpected error (" + str(e) + ") when trying to parse the following line:")
