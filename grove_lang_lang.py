@@ -233,7 +233,11 @@ class StringLiteral(Expression):
         token = token[1:-1]
         if '"' in token:
             raise GroveLangParseException("String Literal cannot contain quote")
+        for c in tokens:
+            if(c == ' ' or c == '\\'):
+                raise GroveLangParseException("String Literal cannot have white spaces")
         return StringLiteral(token)
+    
 
 class Object(Expression):
     def __init__(self, value):
