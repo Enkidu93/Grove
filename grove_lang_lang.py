@@ -45,7 +45,7 @@ class Expression(Command, metaclass=ABCMeta):
     @abstractmethod
     def eval(self) -> int: pass
     @classmethod
-    def parse(cls, tokens: list[str]) -> Expression:
+    def parse(cls, tokens: list[str]) -> tuple[Expression, list[str]]:
         """Factory method for creating Expression subclasses from tokens"""
         # get a list of all the subclasses of Expression
         subclasses: list[type[Expression]] = cls.__subclasses__()
@@ -301,8 +301,39 @@ class Object(Expression):
             raise GroveParseError('Object instantiation failed')
     
 class Call(Expression):
-    # TODO: Implement node for "import" statements
-    pass
+    def __init__(self, objectName:Name, methodName:Name, args:list[Expression]):
+        self.objectName = objectName
+        self.methodName = methodName
+        self.args = args
+    def eval(self):
+        for el in self.args:
+            self.methodName(el)
+
+    def parse(tokens: list[str]) -> Call:
+        '''extracting the names and testing for error'''
+        if len(tokens)<6:
+            raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
+        if str(tokens[0])!='call':
+            raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
+        if str(tokens[1])!='(':
+            raise GroveParseError("Missing a left parenthesis")
+        if str(tokens[-1])!=")":
+            raise GroveParseError("Missing a right parenthesis")
+        try:
+            objectName = Name.parse(tokens[2])
+        except:
+            raise GroveParseError(f"Object variable {tokens[2]} could not be parsed")
+        try:
+            methodName = Name.parse(tokens[3])
+        except:
+            raise GroveParseError(f"Method could not be parsed")
+        try:
+            args = Expression.parse(tokens[3:])
+        except:
+            raise GroveParseError(f"Expression could not be parsed")
+
+        return Call(tokens[2], tokens[3], tokens[3:]) 
+    
 
 class Import(Statement):
     def __init__(self, names):
