@@ -8,10 +8,10 @@ def main():
         try:
             x = Command.parse(s).eval()
             if x is not None: print(x)
-        except GroveLangParseException as e:
+        except GroveParseError as e:
             print(f"Error Parsing {s}")
             print(e)
-        except GroveLangEvalException as e:
+        except GroveEvalError as e:
             print(f"Error Evaluating {s}")
             print(e)
 
