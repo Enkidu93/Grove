@@ -218,8 +218,38 @@ class Object(Expression):
     
 class Call(Expression):
     # TODO: Implement node for "call" expression
-    pass
+    def __init__(self, objectName:Name, methodName:Name, *args:Expression):
+        self.objectName = objectName 
+        self.methodName = methodName
+        self.args = args
+    def eval(self) -> None:
+        for el in dir(self.objectName):
+            if el == self.methodName.name:
+                f = getattr(self.objectName, el)
+    g@staticmethod
+    def parse(tokens: tuple[Expression, Name]) -> Call:
+        """Factory method for creating tokens and expression from string"""
 
+        """extracting the Names and testing for errors"""
+        # 0. ensure there is at least an object and a method
+        if len(tokens) < 2:
+            raise GroveLangParseException("At least 2 arguments expected for method call")
+        # 1. ensure that the object name variable is declared
+        if not tokens[0] in context.keys():
+            raise GroveLangEvalException(f"Object variable {tokens[0]} not declared")
+        # 2. ensure that the method is in the introspection of the variable
+        if tokens[1] not in dir(tokens[0]):
+            raise GroveLangEvalException(f"Variable {tokens[0]} does not have method name {tokens[1]}")
+        
+        for arg in tokens:
+
+        return None
+
+    def __eq__(self, other: Any):
+        return (isinstance(other, Set) and 
+                self.name == other.name and 
+                self.value == other.value)
+    pass
 class Import(Expression):
     # TODO: Implement node for "import" statements
     pass
