@@ -4,7 +4,7 @@ from grove_lang_lang import *
 def main():
     # print("Welcome to the Grove Interpreter!")
     while True:
-        s: str = input('> ')
+        s: str = input()
         try:
             x = Command.parse(s).eval()
             if x is not None: print(x)
