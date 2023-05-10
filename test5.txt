@@ -1,4 +1,4 @@
-set ge = new GroveException
+set ge = new GroveError
 set lst = new __builtins__.list
 call ( lst append 3 )
 call ( lst append 5 )
