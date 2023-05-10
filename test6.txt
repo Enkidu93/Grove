@@ -1,0 +1,10 @@
+import calendar
+set c = new calendar.Calendar
+set feb = call ( c monthdayscalendar 2014 2 )
+set weekTwo = call ( feb __getitem__ 1 )
+set nine = call ( weekTwo __getitem__ 6 )
+nine
+set txt_c = new calendar.TextCalendar
+set march = call ( txt_c formatmonth 2014 3 )
+call ( march __len__ )
+quit
