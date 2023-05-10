@@ -226,10 +226,8 @@ class Call(Expression):
         for el in dir(self.objectName):
             if el == self.methodName.name:
                 f = getattr(self.objectName, el)
-    g@staticmethod
+    @staticmethod
     def parse(tokens: tuple[Expression, Name]) -> Call:
-        """Factory method for creating tokens and expression from string"""
-
         """extracting the Names and testing for errors"""
         # 0. ensure there is at least an object and a method
         if len(tokens) < 2:
@@ -240,8 +238,12 @@ class Call(Expression):
         # 2. ensure that the method is in the introspection of the variable
         if tokens[1] not in dir(tokens[0]):
             raise GroveLangEvalException(f"Variable {tokens[0]} does not have method name {tokens[1]}")
-        
-        for arg in tokens:
+        rest = list[tokens[2:]]
+        for i in range(len(rest)):
+            try:
+                return rest[i].parse()
+            except:
+                
 
         return None
 
