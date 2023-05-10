@@ -328,7 +328,7 @@ class Call(Expression):
         except:
             raise GroveParseError(f"Method could not be parsed")
         try:
-            args = Expression.parse(tokens[3:])
+            args = Expression.parse_list(tokens[3:])
         except:
             raise GroveParseError(f"Expression could not be parsed")
 
