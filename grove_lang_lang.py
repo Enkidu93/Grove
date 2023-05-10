@@ -309,6 +309,7 @@ class Call(Expression):
         for el in self.args:
             self.methodName(el)
 
+    @staticmethod
     def parse(tokens: list[str]) -> Call:
         '''extracting the names and testing for error'''
         if len(tokens)<6:
@@ -320,19 +321,19 @@ class Call(Expression):
         if str(tokens[-1])!=")":
             raise GroveParseError("Missing a right parenthesis")
         try:
-            objectName = Name.parse(tokens[2])
+            objectName = Name.parse([tokens[2]])
         except:
-            raise GroveParseError(f"Object variable {tokens[2]} could not be parsed")
+            raise GroveParseError(f"Object variable {tokens[2]} could not be parsed (in call)")
         try:
-            methodName = Name.parse(tokens[3])
+            methodName = Name.parse([tokens[3]])
         except:
-            raise GroveParseError(f"Method could not be parsed")
+            raise GroveParseError(f"Method {tokens[3]} could not be parsed (in call)")
         try:
-            args = Expression.parse_list(tokens[3:])
+            args = Expression.parse_list(tokens[3:-1])
         except:
-            raise GroveParseError(f"Expression could not be parsed")
+            raise GroveParseError(f"Expression could not be parsed (in call)")
 
-        return Call(tokens[2], tokens[3], tokens[3:]) 
+        return Call(objectName, methodName, args) 
     
 
 class Import(Statement):
