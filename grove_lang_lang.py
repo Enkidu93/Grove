@@ -101,7 +101,7 @@ class Set(Statement):
         self.name = name
         self.value = value
     def eval(self) -> None:
-        context[self.name.name] = self.value.eval()
+        [self.name.name] = self.value.eval()
     def __eq__(self, other: Any):
         return (isinstance(other, Set) and 
                 self.name == other.name and 
