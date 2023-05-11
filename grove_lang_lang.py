@@ -7,7 +7,7 @@ import importlib
 context: dict[str,int] = {}
 
 # add a "verbose" flag to print all parse exceptions while debugging
-verbose = False
+verbose:bool = False
 
 # define base classes for Language exceptions for ParsingExceptions
 class GroveError(Exception): pass
@@ -45,7 +45,7 @@ class Expression(Command, metaclass=ABCMeta):
     @abstractmethod
     def eval(self) -> int: pass
     @classmethod
-    def parse(cls, tokens: list[str]) -> Expression:
+    def parse(cls, tokens: list[str]) -> tuple[Expression, list[str]]:
         """Factory method for creating Expression subclasses from tokens"""
         # get a list of all the subclasses of Expression
         subclasses: list[type[Expression]] = cls.__subclasses__()
@@ -57,6 +57,29 @@ class Expression(Command, metaclass=ABCMeta):
                 if verbose: print(e)
         # if none of the subclasses parsed successfully raise an exception
         raise GroveParseError(f"Unrecognized Expression: {' '.join(tokens)}")
+    
+    @classmethod
+    def parse_list(cls, tokens: list[str]) -> list[Expression]:
+        remaining = tokens
+        out = []
+        while len(remaining) != 0:
+            cont = True
+            index = 1
+            while cont:
+                toks = remaining[:index]
+                try:
+                    exp:Expression = Expression.parse(toks)
+                    out.append(exp)
+                    cont = False
+                except GroveParseError as g:
+                    if verbose:
+                        print(g)
+                    index += 1
+                if index > len(remaining):
+                    raise GroveParseError(f"Unrecognized Expression: {' '.join(tokens)}")
+            remaining = remaining[index:]
+        return out
+    
     @staticmethod
     def match_parens(tokens: list[str]) -> int:
         """Searches tokens beginning with ( and returns index of matching )"""
@@ -245,28 +268,25 @@ class Object(Expression):
         self.names:list[str] = names
     def eval(self):
         path_elements = [name.name for name in self.names]
-        if len(path_elements) == 1:
-            class_ = path_elements[0]
+        class_name = path_elements[-1]
+        module_name = '.'.join(path_elements[0:-1])
+        if verbose:
+            print(module_name, class_name)
+        if module_name == '__builtins__' or module_name == '':
+            class_ = eval(class_name)
         else:
-            class_name = path_elements[-1]
-            module_name = '.'.join(path_elements[0:-1])
-            if verbose:
-                print(module_name, class_name)
-            if module_name == '__builtins__':
-                class_ = eval(class_name)
-            else:
-                try:
-                    module = context[module_name]
-                except KeyError:
-                    raise GroveEvalError(f"Module {module_name} not in context.")
-                try:
-                    class_ = getattr(module, class_name)
-                except AttributeError as e:
-                    raise GroveEvalError(e.msg)
+            try:
+                module = context[module_name]
+            except KeyError:
+                raise GroveEvalError(f"Module {module_name} not in context.")
+            try:
+                class_ = getattr(module, class_name)
+            except AttributeError as e:
+                raise GroveEvalError(e.msg)
         return class_()
     @staticmethod
     def parse(tokens: list[str]) -> Object:
-        if len(tokens) < 2:
+        if len(tokens) != 2:
             raise GroveParseError("Object instantiation requires two tokens.")
         if tokens[0] != "new":
             raise GroveParseError("Object instantiation must begin with 'new' keyword.")
@@ -281,8 +301,40 @@ class Object(Expression):
             raise GroveParseError('Object instantiation failed')
     
 class Call(Expression):
-    # TODO: Implement node for "import" statements
-    pass
+    def __init__(self, objectName:Name, methodName:Name, args:list[Expression]):
+        self.objectName = objectName
+        self.methodName = methodName
+        self.args = args
+
+    @staticmethod
+    def parse(tokens: list[str]) -> Call:
+        '''extracting the names and testing for error'''
+        if len(tokens)<5:
+            raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
+        if str(tokens[0])!='call':
+            raise GroveParseError(f"not enough tokens for call ({len(tokens)} given)")
+        if str(tokens[1])!='(':
+            raise GroveParseError("Missing a left parenthesis")
+        if str(tokens[-1])!=")":
+            raise GroveParseError("Missing a right parenthesis")
+        try:
+            objectName = Name.parse([tokens[2]])
+        except:
+            raise GroveParseError(f"Object variable {tokens[2]} could not be parsed (in call)")
+        try:
+            methodName = Name.parse([tokens[3]])
+        except:
+            raise GroveParseError(f"Method {tokens[3]} could not be parsed (in call)")
+        try:
+            args = Expression.parse_list(tokens[4:-1])
+        except:
+            raise GroveParseError(f"Expression could not be parsed (in call)")
+
+        return Call(objectName, methodName, args) 
+    
+    def eval(self):
+        f = getattr(self.objectName.eval(), self.methodName.name)
+        return f(*[e.eval() for e in self.args])
 
 class Import(Statement):
     def __init__(self, names):
@@ -296,7 +348,7 @@ class Import(Statement):
             raise GroveEvalError(f"Module not found: {m.msg}")
     @staticmethod
     def parse(tokens: list[str]) -> Object:
-        if len(tokens) < 2:
+        if len(tokens) != 2:
             raise GroveParseError("Not enough tokens for import statement")
         if tokens[0] != "import":
             raise GroveParseError("Import statement must begin with 'import' keyword.")
