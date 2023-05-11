@@ -2,6 +2,7 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Any, Union
 import importlib
+import builtins
 
 # create a context where variables stored with set are kept
 context: dict[str,int] = {}
@@ -161,7 +162,10 @@ class Add(Expression):
         self.first = first
         self.second = second
     def eval(self) -> int:
-        return self.first.eval() + self.second.eval()
+        try:
+            return self.first.eval() + self.second.eval()
+        except TypeError:
+            raise GroveEvalError("Mismatched types in Add expression.")
     def __eq__(self, other) -> bool:
         return (isinstance(other, Add) and 
                 other.first == self.first and 
@@ -237,6 +241,9 @@ class Name(Expression):
         # 1. ensure that all characters in that token are alphabetic
         if not tokens[0].isidentifier():
             raise GroveParseError("Names can only contain letters, numbers, or _")
+        keywords = ['call', 'import', 'new', 'set', 'quit', 'exit']
+        if tokens[0] in keywords:
+            raise GroveParseError("Names cannot be restricted keywords")
         # if this point is reached, this is a valid Number expression
         return Name(tokens[0])
 
@@ -272,8 +279,16 @@ class Object(Expression):
         module_name = '.'.join(path_elements[0:-1])
         if verbose:
             print(module_name, class_name)
-        if module_name == '__builtins__' or module_name == '':
-            class_ = eval(class_name)
+        if module_name == '':
+            try:
+                class_ = globals()[class_name]
+            except KeyError:
+                raise GroveEvalError('Variable name not in context!')
+        elif module_name == '__builtins__':
+            try:
+                class_ = getattr(builtins, class_name)
+            except AttributeError:
+                raise GroveEvalError('class name not in builtins')
         else:
             try:
                 module = context[module_name]
@@ -282,7 +297,7 @@ class Object(Expression):
             try:
                 class_ = getattr(module, class_name)
             except AttributeError as e:
-                raise GroveEvalError(e.msg)
+                raise GroveEvalError(f"Class {class_name} not in module.")
         return class_()
     @staticmethod
     def parse(tokens: list[str]) -> Object:
@@ -333,7 +348,10 @@ class Call(Expression):
         return Call(objectName, methodName, args) 
     
     def eval(self):
-        f = getattr(self.objectName.eval(), self.methodName.name)
+        try:
+            f = getattr(self.objectName.eval(), self.methodName.name)
+        except AttributeError:
+            raise GroveEvalError("Method not found in context")
         return f(*[e.eval() for e in self.args])
 
 class Import(Statement):
